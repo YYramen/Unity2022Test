@@ -1,28 +1,25 @@
-using Unity.Entities;
 using UnityEngine;
+using Unity.Entities;
 
-/// <summary>
-/// このMonoBehaviourコンポーネントをSubSceneにあるEmptyオブジェクトにアタッチして下さい
-/// </summary>
-public class SpawnerAuthoring : MonoBehaviour
+class SpawnerAuthoring : MonoBehaviour
 {
-	[SerializeField]
-	private GameObject _prefab;
+    public GameObject Prefab;
+    public float SpawnRate;
+}
 
-	/// <summary>
-	/// Entityへの変換処理を記述します。
-	/// これはゲーム再生時に実行されます。
-	/// </summary>
-	class Baker : Baker<SpawnerAuthoring>
-	{
-		public override void Bake(SpawnerAuthoring authoring)
-		{
-			// アタッチされたオブジェクトに事前に要していたコンポーネントを追加します。
-			AddComponent(new SpawnComponent()
-			{
-				// GetEntityを使用することで、MonoBehaviourオブジェクトをEntityに変換し、ECSコンポーネントに設定します。
-				Prefab = GetEntity(authoring._prefab)
-			});
-		}
-	}
+class SpawnerBaker : Baker<SpawnerAuthoring>
+{
+    public override void Bake(SpawnerAuthoring authoring)
+    {
+        var entity = GetEntity(TransformUsageFlags.None);
+        AddComponent(entity, new Spawner
+        {
+            // デフォルトでは、各オーサリングGameObjectはEntityに変換されます。
+            // GameObject（またはオーサリングコンポーネント）が与えられると、GetEntityは生成されるEntityを検索します。
+            Prefab = GetEntity(authoring.Prefab, TransformUsageFlags.Dynamic),
+            SpawnPosition = authoring.transform.position,
+            NextSpawnTime = 0.0f,
+            SpawnRate = authoring.SpawnRate
+        });
+    }
 }
